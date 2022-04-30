@@ -33,7 +33,8 @@ func Discovery(credMaps map[string]string) bool {
 			}
 		}(params.Conn)
 
-		System(params)
+		Interface(params)
+		//System(params)
 		// polling
 	} else if credMaps["discovery"] == "false" {
 		//polling

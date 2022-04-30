@@ -32,6 +32,7 @@ func main() {
 	if string(credMap["device"]) == "linux" {
 
 		var bval = SSH.Discovery(credMap)
+		//eyJkZXZpY2UiOiJsaW51eCIsImhvc3QiOiJsb2NhbGhvc3QiLCJwb3J0IjoiMjIiLCJ1c2VyIjoidW1hbmciLCJwYXNzd29yZCI6Ik1pbmRAMTIzIiwiZGlzY292ZXJ5IjoidHJ1ZSJ9
 		fmt.Println(bval)
 
 	} else if string(credMap["device"]) == "windows" {
