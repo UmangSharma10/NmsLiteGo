@@ -31,9 +31,14 @@ func main() {
 
 	if string(credMap["device"]) == "linux" {
 
-		var bval = SSH.Discovery(credMap)
+		if credMap["category"] == "discovery" {
+			var bval = SSH.Discovery(credMap)
+			fmt.Println(bval)
+		}
+		/*else if(credMap["category"] == "polling"){
+		}*/
+
 		//eyJkZXZpY2UiOiJsaW51eCIsImhvc3QiOiJsb2NhbGhvc3QiLCJwb3J0IjoiMjIiLCJ1c2VyIjoidW1hbmciLCJwYXNzd29yZCI6Ik1pbmRAMTIzIiwiZGlzY292ZXJ5IjoidHJ1ZSJ9
-		fmt.Println(bval)
 
 	} else if string(credMap["device"]) == "windows" {
 
@@ -41,7 +46,13 @@ func main() {
 
 	} else if string(credMap["device"]) == "network" {
 
-		Snmp.Discovery(credMap)
+		if credMap["category"] == "discovery" {
+			var value = Snmp.Discovery(credMap)
+			fmt.Println(value)
+		} else if credMap["category"] == "polling" {
+			var result = Snmp.Polling(credMap)
+			fmt.Println(result)
+		}
 
 	}
 

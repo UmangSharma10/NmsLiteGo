@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func Discovery(credMaps map[string]string) bool {
+func Discovery(credMaps map[string]string) string {
 
 	if credMaps["discovery"] == "true" {
 		port, _ := strconv.Atoi(credMaps["port"])
@@ -37,11 +37,11 @@ func Discovery(credMaps map[string]string) bool {
 		}
 		_, err = session.Output("uname")
 		if err != nil {
-			return false
+			return "failed"
 		}
 
 		if err != nil {
-			return false
+			return "failed"
 		}
 		defer func(sshClient *ssh.Client) {
 			err := sshClient.Close()
@@ -49,16 +49,7 @@ func Discovery(credMaps map[string]string) bool {
 
 			}
 		}(sshClient)
-
-		//Call Polling
-		//Cpu(sshClient)
-		//Disk(sshClient)
-		//Memory(sshClient)
-		//Process(sshClient)
-		System(sshClient)
-	} else if credMaps["discovery"] == "false" {
-		//call polling
 	}
 
-	return true
+	return "success"
 }

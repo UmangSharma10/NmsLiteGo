@@ -2,14 +2,15 @@ package Snmp
 
 import (
 	g "github.com/gosnmp/gosnmp"
+	"log"
 	"net"
 	"strconv"
 	"time"
 )
 
-func Discovery(credMaps map[string]string) bool {
+func Discovery(credMaps map[string]string) string {
 
-	if credMaps["discovery"] == "true" {
+	if credMaps["category"] == "discovery" {
 		port, _ := strconv.Atoi(credMaps["port"])
 		// Build our own GoSNMP struct, rather than using g.Default.
 		// Do verbose logging of packets.
@@ -22,9 +23,14 @@ func Discovery(credMaps map[string]string) bool {
 			//Logger:    g.NewLogger(log.New(os.Stdout, "", 0)),
 		}
 		err := params.Connect()
+
+		_, err2 := params.Get([]string{"1.3.6.1.2.1.1.1.0"})
+		if err2 != nil {
+			return "failed"
+		}
 		if err != nil {
-			return false
-			//log.Fatalf("Connect() err: %v", err)
+			log.Fatalf("Connect() err: %v", err)
+			return "failed"
 		}
 		defer func(Conn net.Conn) {
 			err := Conn.Close()
@@ -33,11 +39,8 @@ func Discovery(credMaps map[string]string) bool {
 			}
 		}(params.Conn)
 
-		Interface(params)
-		//System(params)
-		// polling
-	} else if credMaps["discovery"] == "false" {
-		//polling
+		//TODO: ASk what to do
 	}
-	return true
+	return "success"
+
 }
