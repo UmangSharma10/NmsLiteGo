@@ -35,11 +35,11 @@ func Polling(credMaps map[string]string) string {
 		}
 	}(params.Conn)
 	var result = ""
-	if credMaps["metricGroup"] == "Interface" {
-		result = Interface(params)
+	if credMaps["metricGroup"] == "fetchInterface" {
+		result = fetchInterface(params)
 		//fmt.Println(result)
-	} else if credMaps["metricGroup"] == "System" {
-		result = System(params)
+	} else if credMaps["metricGroup"] == "fetchSystem" {
+		result = fetchSystem(params)
 		// fmt.Println(result)
 	}
 
@@ -48,11 +48,11 @@ func Polling(credMaps map[string]string) string {
 
 var list []string
 
-func Interface(client *g.GoSNMP) string {
+func fetchInterface(client *g.GoSNMP) string {
 	var listofInterface []map[string]interface{}
 	interfaceOids := []string{
 		".1.3.6.1.2.1.2.2.1.1", ".1.3.6.1.2.1.2.2.1.2", ".1.3.6.1.2.1.2.2.1.3", ".1.3.6.1.2.1.2.2.1.5", ".1.3.6.1.2.1.2.2.1.6", ".1.3.6.1.2.1.2.2.1.7", ".1.3.6.1.2.1.2.2.1.8", ".1.3.6.1.2.1.2.2.1.14", ".1.3.6.1.2.1.2.2.1.20", ".1.3.6.1.2.1.2.2.1.16", ".1.3.6.1.2.1.2.2.1.10"}
-	err := client.Walk(".1.3.6.1.2.1.2.2.1.1", Walk)
+	err := client.Walk(".1.3.6.1.2.1.2.2.1.1", walk)
 	if err != nil {
 		os.Exit(1)
 	}
@@ -88,7 +88,7 @@ func Interface(client *g.GoSNMP) string {
 		listofInterface = append(listofInterface, listData)
 	}
 	result := map[string]interface{}{
-		"Interface": listofInterface,
+		"fetchInterface": listofInterface,
 	}
 
 	bytes, _ := json.Marshal(result)
@@ -96,13 +96,13 @@ func Interface(client *g.GoSNMP) string {
 
 }
 
-func Walk(pdu g.SnmpPDU) error {
+func walk(pdu g.SnmpPDU) error {
 	str := fmt.Sprintf("%v", pdu.Value)
 	list = append(list, str)
 	return nil
 }
 
-func System(client *g.GoSNMP) string {
+func fetchSystem(client *g.GoSNMP) string {
 
 	sysnameOid := "1.3.6.1.2.1.1.5.0"
 	sysdescOid := "1.3.6.1.2.1.1.1.0"

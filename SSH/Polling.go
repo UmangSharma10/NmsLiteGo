@@ -42,23 +42,23 @@ func Polling(credMaps map[string]string) string {
 	}(sshClient)
 	var result = ""
 
-	if credMaps["metricGroup"] == "Cpu" {
-		result = Cpu(sshClient)
-	} else if credMaps["metricGroup"] == "Memory" {
-		result = Memory(sshClient)
-	} else if credMaps["metricGroup"] == "Process" {
-		result = Process(sshClient)
-	} else if credMaps["metricGroup"] == "System" {
-		result = System(sshClient)
-	} else if credMaps["metricGroup"] == "Disk" {
-		result = Disk(sshClient)
+	if credMaps["metricGroup"] == "fetchCpu" {
+		result = fetchCpu(sshClient)
+	} else if credMaps["metricGroup"] == "fetchMemory" {
+		result = fetchMemory(sshClient)
+	} else if credMaps["metricGroup"] == "fetchProcess" {
+		result = fetchProcess(sshClient)
+	} else if credMaps["metricGroup"] == "fetchSystem" {
+		result = fetchSystem(sshClient)
+	} else if credMaps["metricGroup"] == "fetchDisk" {
+		result = fetchDisk(sshClient)
 	}
 	return result
 }
 func standardizeSpaces(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }
-func Cpu(client *ssh.Client) string {
+func fetchCpu(client *ssh.Client) string {
 	var getCpuMap []map[string]string
 	session, err := client.NewSession()
 	if err != nil {
@@ -140,7 +140,7 @@ func Cpu(client *ssh.Client) string {
 	return string(bytes)
 
 }
-func Memory(client *ssh.Client) string {
+func fetchMemory(client *ssh.Client) string {
 
 	session, err := client.NewSession()
 	if err != nil {
@@ -168,7 +168,7 @@ func Memory(client *ssh.Client) string {
 	return string(bytes)
 
 }
-func Process(client *ssh.Client) string {
+func fetchProcess(client *ssh.Client) string {
 
 	var getProcessMap []map[string]string
 
@@ -216,7 +216,7 @@ func Process(client *ssh.Client) string {
 	return string(bytes)
 
 }
-func System(client *ssh.Client) string {
+func fetchSystem(client *ssh.Client) string {
 
 	session, err := client.NewSession()
 	if err != nil {
@@ -251,7 +251,7 @@ func System(client *ssh.Client) string {
 	if err != nil {
 		panic(err)
 	}
-	OsVersionData, err := session.Output("hostnamectl | grep \"Operating System\"")
+	OsVersionData, err := session.Output("hostnamectl | grep \"Operating fetchSystem\"")
 	OsVersionDataString := string(OsVersionData)
 	OsVersionDataSplit := strings.Split(OsVersionDataString, ":")
 	OsVersionSplit := strings.Split(OsVersionDataSplit[1], "\n")
@@ -277,7 +277,7 @@ func System(client *ssh.Client) string {
 	return string(bytes)
 
 }
-func Disk(client *ssh.Client) string {
+func fetchDisk(client *ssh.Client) string {
 	var getCpuMap []map[string]string
 
 	//DiskALL
