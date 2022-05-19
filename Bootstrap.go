@@ -19,14 +19,14 @@ func main() {
 		panic(err)
 	}
 
-	var credMap map[string]string
+	var credMap map[string]interface{}
 
 	err = json.Unmarshal(jsonDecodedString, &credMap)
 	if err != nil {
 
 	}
 
-	if string(credMap["metric.type"]) == "linux" {
+	if string(credMap["metric.type"].(string)) == "linux" {
 
 		if credMap["category"] == "discovery" {
 			SSH.Discovery(credMap)
@@ -34,12 +34,12 @@ func main() {
 			SSH.Polling(credMap)
 		}
 
-	} else if string(credMap["metric.type"]) == "windows" {
+	} else if string(credMap["metric.type"].(string)) == "windows" {
 		if credMap["category"] == "discovery" {
 			Winrm.Discovery(credMap)
 		}
 
-	} else if string(credMap["metric.type"]) == "network" {
+	} else if string(credMap["metric.type"].(string)) == "network" {
 
 		if credMap["category"] == "discovery" {
 			Snmp.Discovery(credMap)

@@ -6,20 +6,19 @@ import (
 	"fmt"
 	"golang.org/x/crypto/ssh"
 	"log"
-	"strconv"
 	"strings"
 	"time"
 )
 
-func Discovery(credMaps map[string]string) {
+func Discovery(credMaps map[string]interface{}) {
 
-	port, errPort := strconv.Atoi(credMaps["port"])
+	port := uint16(credMaps["port"].(float64))
 
-	sshHost := credMaps["ip.address"]
+	sshHost := credMaps["ip.address"].(string)
 
-	sshUser := credMaps["user"]
+	sshUser := credMaps["user"].(string)
 
-	sshPassword := credMaps["password"]
+	sshPassword := credMaps["password"].(string)
 
 	sshPort := port
 	// Create SSHP login configuration
@@ -62,24 +61,6 @@ func Discovery(credMaps map[string]string) {
 			result["status.code"] = "200"
 		}
 	}(sshClient)
-
-	if errPort != nil {
-
-		result["status"] = "failed"
-
-		result["error"] = "Port invalid"
-
-		result["status.code"] = "400"
-
-		data, _ := json.Marshal(result)
-
-		stringEncode := b64.StdEncoding.EncodeToString(data)
-
-		log.SetFlags(0)
-
-		log.Fatal(stringEncode)
-
-	}
 
 	if errorDial != nil {
 
@@ -165,6 +146,7 @@ func Discovery(credMaps map[string]string) {
 		result["status.code"] = "200"
 	}
 
+	result["dis.id"] = credMaps["dis.id"]
 	result["ip.address"] = credMaps["ip.address"]
 
 	result["metric.type"] = credMaps["metric.type"]

@@ -5,16 +5,15 @@ import (
 	"fmt"
 	"golang.org/x/crypto/ssh"
 	"log"
-	"strconv"
 	"strings"
 	"time"
 )
 
-func Polling(credMaps map[string]string) string {
-	port, _ := strconv.Atoi(credMaps["port"])
-	sshHost := credMaps["host"]
-	sshUser := credMaps["user"]
-	sshPassword := credMaps["password"]
+func Polling(credMaps map[string]interface{}) {
+	port := uint16(credMaps["port"].(float64))
+	sshHost := credMaps["ip.address"].(string)
+	sshUser := credMaps["user"].(string)
+	sshPassword := credMaps["password"].(string)
 	sshPort := port
 	// Create SSHP login configuration
 	config := &ssh.ClientConfig{
@@ -32,6 +31,7 @@ func Polling(credMaps map[string]string) string {
 	addr := fmt.Sprintf("%s:%d", sshHost, sshPort)
 	sshClient, err := ssh.Dial("tcp", addr, config)
 	if err != nil {
+		log.SetFlags(0)
 		log.Fatalf("Connect() err: %v", err)
 	}
 	defer func(sshClient *ssh.Client) {
@@ -42,18 +42,19 @@ func Polling(credMaps map[string]string) string {
 	}(sshClient)
 	var result = ""
 
-	if credMaps["metricGroup"] == "fetchCpu" {
+	if credMaps["metricGroup"] == "Cpu" {
 		result = fetchCpu(sshClient)
-	} else if credMaps["metricGroup"] == "fetchMemory" {
+	} else if credMaps["metricGroup"] == "Memory" {
 		result = fetchMemory(sshClient)
-	} else if credMaps["metricGroup"] == "fetchProcess" {
+	} else if credMaps["metricGroup"] == "Process" {
 		result = fetchProcess(sshClient)
-	} else if credMaps["metricGroup"] == "fetchSystem" {
+	} else if credMaps["metricGroup"] == "System" {
 		result = fetchSystem(sshClient)
-	} else if credMaps["metricGroup"] == "fetchDisk" {
+	} else if credMaps["metricGroup"] == "Disk" {
 		result = fetchDisk(sshClient)
 	}
-	return result
+
+	fmt.Println(result)
 }
 func standardizeSpaces(s string) string {
 	return strings.Join(strings.Fields(s), " ")
@@ -251,7 +252,7 @@ func fetchSystem(client *ssh.Client) string {
 	if err != nil {
 		panic(err)
 	}
-	OsVersionData, err := session.Output("hostnamectl | grep \"Operating fetchSystem\"")
+	OsVersionData, err := session.Output("hostnamectl | grep \"Operating System\"")
 	OsVersionDataString := string(OsVersionData)
 	OsVersionDataSplit := strings.Split(OsVersionDataString, ":")
 	OsVersionSplit := strings.Split(OsVersionDataSplit[1], "\n")

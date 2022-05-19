@@ -7,16 +7,15 @@ import (
 	"log"
 	"net"
 	"os"
-	"strconv"
 	"time"
 )
 
-func Polling(credMaps map[string]string) string {
-	port, _ := strconv.Atoi(credMaps["port"])
+func Polling(credMaps map[string]interface{}) string {
+	port := uint16(credMaps["port"].(float64))
 	// Build our own GoSNMP struct, rather than using g.Default.
 	// Do verbose logging of packets.
 	params := &g.GoSNMP{
-		Target:    credMaps["host"],
+		Target:    credMaps["host"].(string),
 		Port:      uint16(port),
 		Community: "public",
 		Version:   g.Version2c,

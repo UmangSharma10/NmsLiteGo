@@ -6,16 +6,15 @@ import (
 	"fmt"
 	"github.com/masterzen/winrm"
 	"log"
-	"strconv"
 	"strings"
 )
 
-func Discovery(credMaps map[string]string) {
-	port, errPort := strconv.Atoi(credMaps["port"])
+func Discovery(credMaps map[string]interface{}) {
+	port := int(credMaps["port"].(float64))
 
-	endpoint := winrm.NewEndpoint(credMaps["ip.address"], port, false, false, nil, nil, nil, 0)
+	endpoint := winrm.NewEndpoint(credMaps["ip.address"].(string), port, false, false, nil, nil, nil, 0)
 
-	client, err := winrm.NewClient(endpoint, credMaps["user"], credMaps["password"])
+	client, err := winrm.NewClient(endpoint, credMaps["user"].(string), credMaps["password"].(string))
 
 	commandfordisk := "Get-WmiObject win32_logicaldisk | Foreach-Object {$_.DeviceId,$_.Freespace,$_.Size -join \" \"}"
 
@@ -77,12 +76,6 @@ func Discovery(credMaps map[string]string) {
 		result["status"] = "success"
 
 		result["status.code"] = "200"
-	}
-
-	if errPort != nil {
-
-		log.Fatal(errPort)
-
 	}
 
 	result["ip.address"] = credMaps["ip.address"]

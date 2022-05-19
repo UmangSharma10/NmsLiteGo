@@ -6,37 +6,35 @@ import (
 	"fmt"
 	g "github.com/gosnmp/gosnmp"
 	"log"
-	"net"
-	"strconv"
 	"time"
 )
 
-func Discovery(credMaps map[string]string) {
+func Discovery(credMaps map[string]interface{}) {
 	var version = g.Version2c
 
 	switch credMaps["version"] {
 
-	case "version1":
+	case "v1":
 
 		version = g.Version1
 
 		break
-	case "version2":
+	case "v2c":
 
 		version = g.Version2c
 
 		break
 	}
 
-	port, errPort := strconv.Atoi(credMaps["port"])
+	port, _ := credMaps["port"].(int64)
 
 	params := &g.GoSNMP{
 
-		Target: credMaps["ip.address"],
+		Target: credMaps["ip.address"].(string),
 
 		Port: uint16(port),
 
-		Community: credMaps["community"],
+		Community: credMaps["community"].(string),
 
 		Version: version,
 
@@ -44,30 +42,10 @@ func Discovery(credMaps map[string]string) {
 		//Logger:    g.NewLogger(log.New(os.Stdout, "", 0)),
 	}
 
-	err := params.Connect()
-
-	defer func(Conn net.Conn) {
-		err := Conn.Close()
-		if err != nil {
-
-		}
-	}(params.Conn)
-
 	result := make(map[string]interface{})
 
-	_, errGet := params.Get([]string{"1.3.6.1.2.1.1.1.0"})
+	_, errGet := params.Get([]string{".1.3.6.1.2.1.1.1.0"})
 
-	if err != nil {
-
-		log.Fatalf("Connect() err: %v", err)
-
-	}
-
-	if errPort != nil {
-
-		log.Fatal(errPort)
-
-	}
 	if errGet != nil {
 
 		result["status"] = "failed"
