@@ -16,6 +16,24 @@ func Discovery(credMaps map[string]interface{}) {
 
 	client, err := winrm.NewClient(endpoint, credMaps["user"].(string), credMaps["password"].(string))
 
+	defer func() {
+
+		if r := recover(); r != nil {
+			res := make(map[string]interface{})
+			res["status"] = "failed"
+			res["status.code"] = "200"
+			res["error"] = r
+
+			bytes, _ := json.Marshal(res)
+
+			stringEncode := b64.StdEncoding.EncodeToString(bytes)
+			log.SetFlags(0)
+			log.Print(stringEncode)
+
+		}
+
+	}()
+
 	commandfordisk := "Get-WmiObject win32_logicaldisk | Foreach-Object {$_.DeviceId,$_.Freespace,$_.Size -join \" \"}"
 
 	_, _, _, errClient := client.RunPSWithString(commandfordisk, "")
@@ -32,6 +50,8 @@ func Discovery(credMaps map[string]interface{}) {
 		log.SetFlags(0)
 
 		err := errClient.Error()
+
+		subStringUnknownErrorPort := "unknown error"
 
 		subStringPortError := "connection refused"
 
@@ -69,6 +89,20 @@ func Discovery(credMaps map[string]interface{}) {
 
 			log.Fatal(stringEncode)
 
+		} else if strings.Contains(err, subStringUnknownErrorPort) {
+			result["status"] = "failed"
+
+			result["error"] = errClient.Error()
+
+			result["status.code"] = "401"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
 		}
 
 	} else {

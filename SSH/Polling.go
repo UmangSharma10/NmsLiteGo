@@ -1,6 +1,7 @@
 package SSH
 
 import (
+	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/crypto/ssh"
@@ -30,16 +31,27 @@ func Polling(credMaps map[string]interface{}) {
 	// dial gets SSH client
 	addr := fmt.Sprintf("%s:%d", sshHost, sshPort)
 	sshClient, err := ssh.Dial("tcp", addr, config)
-	if err != nil {
-		log.SetFlags(0)
-		log.Fatalf("Connect() err: %v", err)
-	}
-	defer func(sshClient *ssh.Client) {
-		err := sshClient.Close()
-		if err != nil {
+
+	defer func() {
+
+		if r := recover(); r != nil {
+			res := make(map[string]interface{})
+
+			res["error"] = r
+
+			bytes, _ := json.Marshal(res)
+
+			stringEncode := b64.StdEncoding.EncodeToString(bytes)
+			log.SetFlags(0)
+			log.Print(stringEncode)
 
 		}
-	}(sshClient)
+
+	}()
+	if err != nil {
+	}
+
+	data := make(map[string]interface{})
 	var result = ""
 
 	if credMaps["metricGroup"] == "Cpu" {
@@ -53,12 +65,21 @@ func Polling(credMaps map[string]interface{}) {
 	} else if credMaps["metricGroup"] == "Disk" {
 		result = fetchDisk(sshClient)
 	}
+	data["monitorId"] = credMaps["monitorId"]
+	data["metricGroup"] = credMaps["metricGroup"]
+	data["metric.type"] = credMaps["metric.type"]
+	data["value"] = result
 
-	fmt.Println(result)
+	dataMarshal, _ := json.Marshal(data)
+
+	stringEncode := b64.StdEncoding.EncodeToString(dataMarshal)
+
+	fmt.Println(stringEncode)
 }
 func standardizeSpaces(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }
+
 func fetchCpu(client *ssh.Client) string {
 	var getCpuMap []map[string]string
 	session, err := client.NewSession()
@@ -119,10 +140,10 @@ func fetchCpu(client *ssh.Client) string {
 		}
 
 		tempCpu := map[string]string{
-			"system.cpu.core.name":         split1[4],
-			"system.cpu.core.user.percent": split1[5],
-			"system.cpu.core.idle.percent": split1[13],
-			"system.cpu.core.sys.percent":  split1[7],
+			"cpu.core.name":         split1[4],
+			"cpu.core.user.percent": split1[5],
+			"cpu.core.idle.percent": split1[13],
+			"cpu.core.sys.percent":  split1[7],
 		}
 
 		getCpuMap = append(getCpuMap, tempCpu)
@@ -130,11 +151,11 @@ func fetchCpu(client *ssh.Client) string {
 	}
 
 	result := map[string]interface{}{
-		"system.cpu.percent":      splitSystemUserPercent[0],
-		"system.cpu.user.percent": splitCpuUserPercent[0],
-		"system.cpu.idle.percent": splitCpuIdlePercentage[0],
-		"system.cpu.sys.percent":  splitCpuSysPercentage[0],
-		"system.cpu.core":         getCpuMap,
+		"cpu.percent":      splitSystemUserPercent[0],
+		"cpu.user.percent": splitCpuUserPercent[0],
+		"cpu.idle.percent": splitCpuIdlePercentage[0],
+		"cpu.sys.percent":  splitCpuSysPercentage[0],
+		"cpu.core":         getCpuMap,
 	}
 
 	bytes, _ := json.Marshal(result)

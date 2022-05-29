@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func Discovery(credMaps map[string]interface{}) {
+func GetDiscovery(credMaps map[string]interface{}) {
 
 	port := uint16(credMaps["port"].(float64))
 
@@ -47,19 +47,23 @@ func Discovery(credMaps map[string]interface{}) {
 
 	defer func(sshClient *ssh.Client) {
 
-		err := sshClient.Close()
+		defer func() {
 
-		if err != nil {
+			if r := recover(); r != nil {
+				res := make(map[string]interface{})
+				res["status"] = "failed"
+				res["status.code"] = "200"
+				res["error"] = r
 
-			result["status"] = "failed"
+				bytes, _ := json.Marshal(res)
 
-			result["Error"] = err.Error()
-		} else {
+				stringEncode := b64.StdEncoding.EncodeToString(bytes)
+				log.SetFlags(0)
+				log.Print(stringEncode)
 
-			result["status"] = "success"
+			}
 
-			result["status.code"] = "200"
-		}
+		}()
 	}(sshClient)
 
 	if errorDial != nil {
@@ -71,6 +75,8 @@ func Discovery(credMaps map[string]interface{}) {
 		subStringPortError := "connection refused"
 
 		subStringDialError := "handshake failed"
+
+		subStringUnknownErrorPort := "unknown error"
 
 		if strings.Contains(err, subStringPortError) {
 
@@ -104,6 +110,20 @@ func Discovery(credMaps map[string]interface{}) {
 
 			log.Fatal(stringEncode)
 
+		} else if strings.Contains(err, subStringUnknownErrorPort) {
+			result["status"] = "failed"
+
+			result["error"] = errorDial.Error()
+
+			result["status.code"] = "401"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
 		}
 
 	} else {
@@ -135,7 +155,7 @@ func Discovery(credMaps map[string]interface{}) {
 
 		result["status"] = "failed"
 
-		result["error"] = "Discovery Failed, command uname did not work."
+		result["error"] = "discovery Failed, command uname did not work."
 
 		result["status.code"] = "400"
 

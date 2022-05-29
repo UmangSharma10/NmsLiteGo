@@ -1,24 +1,42 @@
 package Snmp
 
 import (
+	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
 	g "github.com/gosnmp/gosnmp"
 	"log"
-	"net"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 )
 
-func Polling(credMaps map[string]interface{}) string {
+func Polling(credMaps map[string]interface{}) {
+
+	var version = g.Version2c
+
+	switch credMaps["version"] {
+
+	case "v1":
+
+		version = g.Version1
+
+		break
+	case "v2c":
+
+		version = g.Version2c
+
+		break
+	}
 	port := uint16(credMaps["port"].(float64))
 	// Build our own GoSNMP struct, rather than using g.Default.
 	// Do verbose logging of packets.
 	params := &g.GoSNMP{
-		Target:    credMaps["host"].(string),
+		Target:    credMaps["ip.address"].(string),
 		Port:      uint16(port),
-		Community: "public",
-		Version:   g.Version2c,
+		Community: credMaps["community"].(string),
+		Version:   version,
 		Timeout:   time.Duration(2) * time.Second,
 		//Logger:    g.NewLogger(log.New(os.Stdout, "", 0)),
 	}
@@ -27,22 +45,42 @@ func Polling(credMaps map[string]interface{}) string {
 		log.Fatalf("Connect() err: %v", err)
 
 	}
-	defer func(Conn net.Conn) {
-		err := Conn.Close()
-		if err != nil {
+
+	defer func() {
+
+		if r := recover(); r != nil {
+			res := make(map[string]interface{})
+
+			res["error"] = r
+
+			bytes, _ := json.Marshal(res)
+
+			stringEncode := b64.StdEncoding.EncodeToString(bytes)
+			log.SetFlags(0)
+			log.Print(stringEncode)
 
 		}
-	}(params.Conn)
-	var result = ""
-	if credMaps["metricGroup"] == "fetchInterface" {
-		result = fetchInterface(params)
-		//fmt.Println(result)
-	} else if credMaps["metricGroup"] == "fetchSystem" {
-		result = fetchSystem(params)
-		// fmt.Println(result)
-	}
 
-	return result
+	}()
+
+	data := make(map[string]interface{})
+	var result = ""
+	if credMaps["metricGroup"] == "Interface" {
+		result = fetchInterface(params)
+
+	} else if credMaps["metricGroup"] == "System" {
+		result = fetchSystem(params)
+	}
+	data["monitorId"] = credMaps["monitorId"]
+	data["metricGroup"] = credMaps["metricGroup"]
+	data["metric.type"] = credMaps["metric.type"]
+	data["value"] = result
+
+	dataMarshal, _ := json.Marshal(data)
+
+	stringEncode := b64.StdEncoding.EncodeToString(dataMarshal)
+
+	fmt.Println(stringEncode)
 }
 
 var list []string
@@ -68,23 +106,84 @@ func fetchInterface(client *g.GoSNMP) string {
 		if err != nil {
 		}
 
-		for key, variable := range w.Variables {
-			switch variable.Type {
-			case g.Integer:
-				listData[variable.Name] = w.Variables[key].Value
-			case g.OctetString:
-				listData[variable.Name] = string(w.Variables[key].Value.([]byte))
-			case g.Gauge32:
-				listData[variable.Name] = w.Variables[key].Value
+		for _, variable := range w.Variables {
+			vname := fmt.Sprintf("%v", variable.Name)
+			ch := strings.SplitAfter(vname, ".1.3.6.1.2.1.2.2.1.")
+			arr := strings.Split(ch[1], ".")
+			choice, _ := strconv.Atoi(arr[0])
 
-			case g.Counter32:
-				listData[variable.Name] = w.Variables[key].Value
+			switch choice {
+			case 2:
+				listData["interface.Description"] = string(variable.Value.([]byte))
 
+			case 3:
+				if variable.Value == 1 {
+					listData["interface.type"] = "other"
+				}
+				if variable.Value == 6 {
+					listData["interface.type"] = "ethernetCsmacd"
+				}
+				if variable.Value == 135 {
+					listData["interface.type"] = "l2vlan"
+				}
+				if variable.Value == 53 {
+					listData["interface.type"] = "propVirtual"
+				}
+
+			case 5:
+				listData["interface.speed"] = variable.Value
+			case 7:
+				if variable.Value == 2 {
+					listData["interface.admin.status"] = "down"
+				}
+				if variable.Value == 1 {
+					listData["interface.admin.status"] = "up"
+				}
+
+			case 8:
+				if variable.Value == 2 {
+					listData["interface.operating.status"] = "down"
+				}
+				if variable.Value == 1 {
+					listData["interface.operating.status"] = "up"
+				}
+			case 14:
+				if variable.Value == nil {
+					listData["ifInError"] = ""
+				}
+
+				if variable.Value == 0 {
+					listData["ifInError"] = variable.Value
+				}
+
+			case 16:
+				if variable.Value == 0 {
+					listData["interface.out.octetes"] = variable.Value
+				} else {
+					listData["interface.out.octetes"] = variable.Value
+				}
+
+			case 20:
+				if variable.Value == 0 {
+					listData["ifOutError"] = variable.Value
+				}
+
+				if variable.Value == nil {
+					listData["ifOutError"] = ""
+				}
+
+			case 10:
+				if variable.Value == 0 {
+					listData["interface.in.octetes"] = variable.Value
+				} else {
+					listData["interface.in.octetes"] = variable.Value
+				}
 			default:
 
 			}
+
+			listofInterface = append(listofInterface, listData)
 		}
-		listofInterface = append(listofInterface, listData)
 	}
 	result := map[string]interface{}{
 		"fetchInterface": listofInterface,

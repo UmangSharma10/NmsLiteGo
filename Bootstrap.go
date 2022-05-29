@@ -29,7 +29,7 @@ func main() {
 	if string(credMap["metric.type"].(string)) == "linux" {
 
 		if credMap["category"] == "discovery" {
-			SSH.Discovery(credMap)
+			SSH.GetDiscovery(credMap)
 		} else if credMap["category"] == "polling" {
 			SSH.Polling(credMap)
 		}
@@ -37,12 +37,14 @@ func main() {
 	} else if string(credMap["metric.type"].(string)) == "windows" {
 		if credMap["category"] == "discovery" {
 			Winrm.Discovery(credMap)
+		} else if credMap["category"] == "polling" {
+			Winrm.Polling(credMap)
 		}
 
 	} else if string(credMap["metric.type"].(string)) == "network" {
 
 		if credMap["category"] == "discovery" {
-			Snmp.Discovery(credMap)
+			Snmp.GetDiscovery(credMap)
 
 		} else if credMap["category"] == "polling" {
 			Snmp.Polling(credMap)
