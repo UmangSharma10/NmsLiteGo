@@ -33,7 +33,11 @@ func Polling(credMaps map[string]interface{}) {
 
 			res["error"] = r
 
-			bytes, _ := json.Marshal(res)
+			bytes, errMarshal := json.Marshal(res)
+
+			if errMarshal != nil {
+				panic(errMarshal)
+			}
 
 			stringEncode := b64.StdEncoding.EncodeToString(bytes)
 			log.SetFlags(0)
@@ -63,7 +67,17 @@ func Polling(credMaps map[string]interface{}) {
 	data["metric.type"] = credMaps["metric.type"]
 	data["value"] = result
 
-	dataMarshal, _ := json.Marshal(data)
+	dataMarshal, errMarshal := json.Marshal(data)
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 
 	stringEncode := b64.StdEncoding.EncodeToString(dataMarshal)
 
@@ -144,9 +158,20 @@ func fetchMemory(client *winrm.Client) string {
 	result["physical.memory"] = physicalMemory
 	result["total.virtual.memory"] = totalVirtualMemory
 	result["free.virtual.memory"] = freeVirtualMemory
+	result["status"] = "success"
 
-	bytes, _ := json.Marshal(result)
+	bytes, errMarshal := json.Marshal(result)
 
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 	return string(bytes)
 }
 
@@ -258,9 +283,21 @@ func fetchProcess(client *winrm.Client) string {
 	}
 	result["process"] = values
 
-	data, _ := json.Marshal(result)
+	result["status"] = "success"
 
-	return string(data)
+	bytes, errMarshal := json.Marshal(result)
+
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
+	return string(bytes)
 }
 
 func fetchDisk(client *winrm.Client) string {
@@ -337,9 +374,21 @@ func fetchDisk(client *winrm.Client) string {
 
 	result["disk"] = disks
 
-	data, _ := json.Marshal(result)
+	result["status"] = "success"
 
-	return string(data)
+	bytes, errMarshal := json.Marshal(result)
+
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
+	return string(bytes)
 
 }
 
@@ -355,6 +404,17 @@ func fetchSystem(client *winrm.Client) string {
 	result["system.user.name"] = strings.Split(res1[2], "\r")[0]
 	result["system.up.time"] = strings.Split(res1[3], "\r")[0]
 	result["status"] = "success"
-	data, _ := json.Marshal(result)
-	return string(data)
+	bytes, errMarshal := json.Marshal(result)
+
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
+	return string(bytes)
 }

@@ -45,26 +45,23 @@ func GetDiscovery(credMaps map[string]interface{}) {
 
 	result := make(map[string]interface{})
 
-	defer func(sshClient *ssh.Client) {
+	defer func() {
 
-		defer func() {
+		if r := recover(); r != nil {
+			res := make(map[string]interface{})
+			res["status"] = "failed"
+			res["status.code"] = "200"
+			res["error"] = r
 
-			if r := recover(); r != nil {
-				res := make(map[string]interface{})
-				res["status"] = "failed"
-				res["status.code"] = "200"
-				res["error"] = r
+			bytes, _ := json.Marshal(res)
 
-				bytes, _ := json.Marshal(res)
+			stringEncode := b64.StdEncoding.EncodeToString(bytes)
+			log.SetFlags(0)
+			log.Print(stringEncode)
 
-				stringEncode := b64.StdEncoding.EncodeToString(bytes)
-				log.SetFlags(0)
-				log.Print(stringEncode)
+		}
 
-			}
-
-		}()
-	}(sshClient)
+	}()
 
 	if errorDial != nil {
 

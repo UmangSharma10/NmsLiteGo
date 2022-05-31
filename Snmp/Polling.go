@@ -16,7 +16,7 @@ func Polling(credMaps map[string]interface{}) {
 
 	var version = g.Version2c
 
-	switch credMaps["version"] {
+	switch credMaps["version"].(string) {
 
 	case "v1":
 
@@ -29,13 +29,28 @@ func Polling(credMaps map[string]interface{}) {
 
 		break
 	}
+
+	var community = "public"
+	switch credMaps["community"].(string) {
+
+	case "public":
+
+		community = "public"
+
+		break
+	case "private":
+
+		community = "private"
+
+		break
+	}
 	port := uint16(credMaps["port"].(float64))
 	// Build our own GoSNMP struct, rather than using g.Default.
 	// Do verbose logging of packets.
 	params := &g.GoSNMP{
 		Target:    credMaps["ip.address"].(string),
 		Port:      uint16(port),
-		Community: credMaps["community"].(string),
+		Community: community,
 		Version:   version,
 		Timeout:   time.Duration(2) * time.Second,
 		//Logger:    g.NewLogger(log.New(os.Stdout, "", 0)),
@@ -76,7 +91,17 @@ func Polling(credMaps map[string]interface{}) {
 	data["metric.type"] = credMaps["metric.type"]
 	data["value"] = result
 
-	dataMarshal, _ := json.Marshal(data)
+	dataMarshal, errMarshal := json.Marshal(data)
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 
 	stringEncode := b64.StdEncoding.EncodeToString(dataMarshal)
 
@@ -189,7 +214,18 @@ func fetchInterface(client *g.GoSNMP) string {
 		"fetchInterface": listofInterface,
 	}
 
-	bytes, _ := json.Marshal(result)
+	bytes, errMarshal := json.Marshal(result)
+
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 	return string(bytes)
 
 }
@@ -243,7 +279,18 @@ func fetchSystem(client *g.GoSNMP) string {
 		"system.oid":         sysOidtemp,
 	}
 
-	bytes, _ := json.Marshal(result)
+	bytes, errMarshal := json.Marshal(result)
+
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 	return string(bytes)
 
 }

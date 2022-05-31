@@ -70,7 +70,17 @@ func Polling(credMaps map[string]interface{}) {
 	data["metric.type"] = credMaps["metric.type"]
 	data["value"] = result
 
-	dataMarshal, _ := json.Marshal(data)
+	dataMarshal, errMarshal := json.Marshal(data)
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 
 	stringEncode := b64.StdEncoding.EncodeToString(dataMarshal)
 
@@ -140,10 +150,10 @@ func fetchCpu(client *ssh.Client) string {
 		}
 
 		tempCpu := map[string]string{
-			"cpu.core.name":         split1[4],
-			"cpu.core.user.percent": split1[5],
+			"cpu.core.name":         split1[3],
+			"cpu.core.user.percent": split1[4],
 			"cpu.core.idle.percent": split1[13],
-			"cpu.core.sys.percent":  split1[7],
+			"cpu.core.sys.percent":  split1[6],
 		}
 
 		getCpuMap = append(getCpuMap, tempCpu)
@@ -158,7 +168,18 @@ func fetchCpu(client *ssh.Client) string {
 		"cpu.core":         getCpuMap,
 	}
 
-	bytes, _ := json.Marshal(result)
+	bytes, errMarshal := json.Marshal(result)
+
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 	return string(bytes)
 
 }
@@ -234,7 +255,18 @@ func fetchProcess(client *ssh.Client) string {
 		"process": getProcessMap,
 	}
 
-	bytes, _ := json.Marshal(result)
+	bytes, errMarshal := json.Marshal(result)
+
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 	return string(bytes)
 
 }
@@ -295,7 +327,18 @@ func fetchSystem(client *ssh.Client) string {
 		"system.os.version":       OsVersionSplit[0],
 	}
 
-	bytes, _ := json.Marshal(result)
+	bytes, errMarshal := json.Marshal(result)
+
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 	return string(bytes)
 
 }
@@ -394,7 +437,18 @@ func fetchDisk(client *ssh.Client) string {
 		"disk.free.bytes":  splitdiskFreeTotalByte[0],
 		"disk.volume":      getCpuMap,
 	}
-	bytes, _ := json.Marshal(result)
+	bytes, errMarshal := json.Marshal(result)
+
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 	return string(bytes)
 
 }
