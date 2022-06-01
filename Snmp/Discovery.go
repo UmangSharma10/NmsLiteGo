@@ -52,7 +52,7 @@ func GetDiscovery(credMaps map[string]interface{}) {
 		if r := recover(); r != nil {
 			res := make(map[string]interface{})
 			res["status"] = "failed"
-			res["status.code"] = "200"
+			res["status.code"] = "400"
 			res["error"] = r
 
 			bytes, _ := json.Marshal(res)

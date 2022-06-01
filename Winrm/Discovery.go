@@ -18,11 +18,11 @@ func Discovery(credMaps map[string]interface{}) {
 
 	defer func() {
 
-		if r := recover(); r != nil {
+		if deferError := recover(); deferError != nil {
 			res := make(map[string]interface{})
 			res["status"] = "failed"
 			res["status.code"] = "200"
-			res["error"] = r
+			res["error"] = deferError
 
 			bytes, _ := json.Marshal(res)
 

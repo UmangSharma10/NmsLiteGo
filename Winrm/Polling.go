@@ -28,10 +28,10 @@ func Polling(credMaps map[string]interface{}) {
 
 	defer func() {
 
-		if r := recover(); r != nil {
+		if deferError := recover(); deferError != nil {
 			res := make(map[string]interface{})
 
-			res["error"] = r
+			res["error"] = deferError
 
 			bytes, errMarshal := json.Marshal(res)
 
@@ -135,8 +135,18 @@ func fetchCpu(client *winrm.Client) string {
 
 	result["system.cpu.core"] = cores
 
-	bytes, _ := json.Marshal(result)
+	bytes, errMarshal := json.Marshal(result)
 
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 	return string(bytes)
 }
 
@@ -202,9 +212,9 @@ func fetchProcess(client *winrm.Client) string {
 
 		processName := value[processCount][2]
 
-		for j := 0; j < len(processData); j++ {
+		for jCount := 0; jCount < len(processData); jCount++ {
 
-			tempProcessDatai = processData[j]
+			tempProcessDatai = processData[jCount]
 
 			if tempProcessDatai[processName] != nil {
 
@@ -355,7 +365,7 @@ func fetchDisk(client *winrm.Client) string {
 
 		disk["disk.used.bytes"] = (disk["disk.total.bytes"]).(int64) - (disk["disk.available.bytes"]).(int64)
 
-		disk["disk.used.percent"] = (float64((float64((disk["disk.total.bytes"]).(int64)) - float64((disk["disk.used.bytes"]).(int64))) / float64((disk["Disk.Total.Bytes"].(int64))))) * 100
+		disk["disk.used.percent"] = (float64((float64((disk["disk.total.bytes"]).(int64)) - float64((disk["disk.used.bytes"]).(int64))) / float64((disk["disk.total.bytes"].(int64))))) * 100
 
 		disk["disk.free.percent"] = 100 - disk["disk.used.percent"].(float64)
 
@@ -370,7 +380,7 @@ func fetchDisk(client *winrm.Client) string {
 
 	result["disk.used.percent"] = ((float64(totalBytes) - float64(usedBytes)) / float64(totalBytes)) * 100
 
-	result["disk.available.percent"] = 100.00 - (result["Disk.Used.Percent"]).(float64)
+	result["disk.available.percent"] = 100.00 - (result["disk.used.percent"]).(float64)
 
 	result["disk"] = disks
 

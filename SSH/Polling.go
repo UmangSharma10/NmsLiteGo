@@ -138,13 +138,13 @@ func fetchCpu(client *ssh.Client) string {
 	cpuCoreSplit := string(cpuCore)
 	cpuCoreSplittemp := strings.Split(cpuCoreSplit, "\n")
 	flag := 0
-	for _, v := range cpuCoreSplittemp {
+	for _, value := range cpuCoreSplittemp {
 		if flag < 3 {
 			flag++
 			continue
 		}
 
-		split1 := strings.Split(standardizeSpaces(v), " ")
+		split1 := strings.Split(standardizeSpaces(value), " ")
 		if len(split1) < 14 {
 			break
 		}
@@ -207,7 +207,18 @@ func fetchMemory(client *ssh.Client) string {
 		"memory.swap.total":   allmemorysplit[8],
 	}
 
-	bytes, _ := json.Marshal(result)
+	bytes, errMarshal := json.Marshal(result)
+
+	if errMarshal != nil {
+		res := make(map[string]interface{})
+		res["error"] = errMarshal.Error()
+		bytes, _ := json.Marshal(res)
+
+		stringEncode := b64.StdEncoding.EncodeToString(bytes)
+		log.SetFlags(0)
+		log.Print(stringEncode)
+
+	}
 	return string(bytes)
 
 }
@@ -228,18 +239,18 @@ func fetchProcess(client *ssh.Client) string {
 	splitprocess := strings.Split(psauxString, "\n")
 
 	flag := 0
-	for _, v := range splitprocess {
+	for _, value := range splitprocess {
 
 		if flag < 1 {
 			flag++
 			continue
 		}
-		splitN := strings.SplitN(standardizeSpaces(v), " ", 11)
+		splitN := strings.SplitN(standardizeSpaces(value), " ", 11)
 		if len(splitN) <= 10 {
 			break
 		}
 
-		temp1 := map[string]string{
+		tempData := map[string]string{
 			"process.user":           splitN[0],
 			"process.pid":            splitN[1],
 			"process.memory.percent": splitN[3],
@@ -247,7 +258,7 @@ func fetchProcess(client *ssh.Client) string {
 			"process.cpu.percent":    splitN[2],
 		}
 
-		getProcessMap = append(getProcessMap, temp1)
+		getProcessMap = append(getProcessMap, tempData)
 
 	}
 
@@ -408,13 +419,13 @@ func fetchDisk(client *ssh.Client) string {
 	diskVolumeAllTemp := strings.Split(diskVolumeAll, "\n")
 	flag := 0
 
-	for _, v := range diskVolumeAllTemp {
+	for _, value := range diskVolumeAllTemp {
 		if flag <= 0 {
 			flag++
 			continue
 		}
 
-		splitDiskVolume := strings.Split(standardizeSpaces(v), " ")
+		splitDiskVolume := strings.Split(standardizeSpaces(value), " ")
 		if len(splitDiskVolume) < 6 {
 			break
 		}
