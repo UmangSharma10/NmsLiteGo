@@ -424,27 +424,16 @@ func fetchDisk(client *ssh.Client) string {
 	if err != nil {
 		panic(err)
 	}
-	diskFreePercent, err := session.Output("df --total | grep \"total\" |  awk '{print (($4/$2)*100)}'")
+	diskFreePercent, err := session.Output("df --total | grep \"total\" |  awk '{print (($4/$2)*100)}';df --total | grep \"total\" |  awk '{print $3 \" \" $4}'")
 	if err != nil {
 		panic(err)
 	}
 	diskFreeBytestemp := string(diskFreePercent)
-	splitdiskFreeBytePercent := strings.Split(standardizeSpaces(diskFreeBytestemp), " ")
+	splitdiskFreeBytePercent := strings.Split(standardizeSpaces(diskFreeBytestemp), "\n")
+	splitdiskUserByte := strings.Split(standardizeSpaces(splitdiskFreeBytePercent[0]), " ")
+	intsplitUno, _ := strconv.Atoi(splitdiskUserByte[1])
+	intsplitDos, _ := strconv.Atoi(splitdiskUserByte[2])
 
-	//DiskUserBytes
-	session, err = client.NewSession()
-	if err != nil {
-		panic(err)
-	}
-	diskUserByte, err := session.Output("df --total | grep \"total\" |  awk '{print $3 \" \" $4}'")
-	if err != nil {
-		panic(err)
-	}
-	diskUserBytestring := string(diskUserByte)
-	splitdiskUserByte := strings.Split(standardizeSpaces(diskUserBytestring), " ")
-	intsplitUno, _ := strconv.Atoi(splitdiskUserByte[0])
-	intsplitDos, _ := strconv.Atoi(splitdiskUserByte[1])
-	//Free byte
 	userFreeData := intsplitUno - intsplitDos
 
 	//Volume
@@ -465,7 +454,7 @@ func fetchDisk(client *ssh.Client) string {
 
 		tempDisk := map[string]string{
 			"disk.volume.used.percent": splitDiskVolume[4],
-			"disk.volume.free.percent": splitdiskFreeBytePercent[0],
+			"disk.volume.free.percent": splitdiskUserByte[0],
 			"disk.volume.total.bytes":  splitDiskVolume[1],
 			"disk.volume.free.bytes":   splitDiskVolume[3],
 			"disk.volume.used.bytes":   splitDiskVolume[2],
