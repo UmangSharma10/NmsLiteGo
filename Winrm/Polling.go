@@ -95,7 +95,74 @@ func fetchCpu(client *winrm.Client) string {
 
 	output := ""
 
-	output, _, _, _ = client.RunPSWithString(ac, "")
+	output, _, _, errClient := client.RunPSWithString(ac, "")
+
+	if errClient != nil {
+
+		log.SetFlags(0)
+
+		err := errClient.Error()
+
+		subStringUnknownErrorPort := "unknown error"
+
+		subStringPortError := "connection refused"
+
+		subStringDialError := "invalid content type"
+
+		if strings.Contains(err, subStringPortError) {
+
+			result["status"] = "failed"
+
+			result["error"] = "Port Invalid, Connection refused"
+
+			result["status.code"] = "400"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+
+		} else if strings.Contains(err, subStringDialError) {
+
+			result["status"] = "failed"
+
+			result["error"] = "invalid content type, user,password or ip.address does not match each other"
+
+			result["status.code"] = "401"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+
+		} else if strings.Contains(err, subStringUnknownErrorPort) {
+			result["status"] = "failed"
+
+			result["error"] = errClient.Error()
+
+			result["status.code"] = "401"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+		}
+
+	} else {
+
+		result["status"] = "success"
+
+		result["status.code"] = "200"
+	}
 
 	re := regexp.MustCompile("Path\\s*:\\s\\\\\\\\\\w*-\\w*\\\\\\w*\\((\\S*)\\)\\\\([\\w\\d\\s%]+)\\n\\w*\\s\\:\\s(\\d*.\\d*)")
 
@@ -155,7 +222,74 @@ func fetchMemory(client *winrm.Client) string {
 
 	output := ""
 	ac := "Get-WmiObject win32_OperatingSystem |%{\"{0} {1} {2} {3}\" -f $_.totalvisiblememorysize, $_.freephysicalmemory, $_.totalvirtualmemorysize, $_.freevirtualmemory}"
-	output, _, _, _ = client.RunPSWithString(ac, "")
+	output, _, _, errClient := client.RunPSWithString(ac, "")
+
+	if errClient != nil {
+
+		log.SetFlags(0)
+
+		err := errClient.Error()
+
+		subStringUnknownErrorPort := "unknown error"
+
+		subStringPortError := "connection refused"
+
+		subStringDialError := "invalid content type"
+
+		if strings.Contains(err, subStringPortError) {
+
+			result["status"] = "failed"
+
+			result["error"] = "Port Invalid, Connection refused"
+
+			result["status.code"] = "400"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+
+		} else if strings.Contains(err, subStringDialError) {
+
+			result["status"] = "failed"
+
+			result["error"] = "invalid content type, user,password or ip.address does not match each other"
+
+			result["status.code"] = "401"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+
+		} else if strings.Contains(err, subStringUnknownErrorPort) {
+			result["status"] = "failed"
+
+			result["error"] = errClient.Error()
+
+			result["status.code"] = "401"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+		}
+
+	} else {
+
+		result["status"] = "success"
+
+		result["status.code"] = "200"
+	}
 
 	myStringArray := strings.Split(standardizeSpaces(output), " ")
 
@@ -318,7 +452,74 @@ func fetchDisk(client *winrm.Client) string {
 
 	ac := "Get-WmiObject win32_logicaldisk |Foreach-Object {$_.DeviceId,$_.Freespace,$_.Size}"
 
-	output, _, _, _ = client.RunPSWithString(ac, "")
+	output, _, _, errClient := client.RunPSWithString(ac, "")
+
+	if errClient != nil {
+
+		log.SetFlags(0)
+
+		err := errClient.Error()
+
+		subStringUnknownErrorPort := "unknown error"
+
+		subStringPortError := "connection refused"
+
+		subStringDialError := "invalid content type"
+
+		if strings.Contains(err, subStringPortError) {
+
+			result["status"] = "failed"
+
+			result["error"] = "Port Invalid, Connection refused"
+
+			result["status.code"] = "400"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+
+		} else if strings.Contains(err, subStringDialError) {
+
+			result["status"] = "failed"
+
+			result["error"] = "invalid content type, user,password or ip.address does not match each other"
+
+			result["status.code"] = "401"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+
+		} else if strings.Contains(err, subStringUnknownErrorPort) {
+			result["status"] = "failed"
+
+			result["error"] = errClient.Error()
+
+			result["status.code"] = "401"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+		}
+
+	} else {
+
+		result["status"] = "success"
+
+		result["status.code"] = "200"
+	}
 
 	res := strings.Split(output, "\r\n")
 
@@ -407,7 +608,75 @@ func fetchSystem(client *winrm.Client) string {
 	a := "aa"
 	output := ""
 	ac := "(Get-WmiObject win32_operatingsystem).name;(Get-WMIObject win32_operatingsystem).version;whoami;(Get-WMIObject win32_operatingsystem).LastBootUpTime;" // Command jo humko run karna hain
-	output, _, _, _ = client.RunPSWithString(ac, a)
+	output, _, _, errClient := client.RunPSWithString(ac, a)
+
+	if errClient != nil {
+
+		log.SetFlags(0)
+
+		err := errClient.Error()
+
+		subStringUnknownErrorPort := "unknown error"
+
+		subStringPortError := "connection refused"
+
+		subStringDialError := "invalid content type"
+
+		if strings.Contains(err, subStringPortError) {
+
+			result["status"] = "failed"
+
+			result["error"] = "Port Invalid, Connection refused"
+
+			result["status.code"] = "400"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+
+		} else if strings.Contains(err, subStringDialError) {
+
+			result["status"] = "failed"
+
+			result["error"] = "invalid content type, user,password or ip.address does not match each other"
+
+			result["status.code"] = "401"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+
+		} else if strings.Contains(err, subStringUnknownErrorPort) {
+			result["status"] = "failed"
+
+			result["error"] = errClient.Error()
+
+			result["status.code"] = "401"
+
+			data, _ := json.Marshal(result)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+		}
+
+	} else {
+
+		result["status"] = "success"
+
+		result["status.code"] = "200"
+	}
+
 	res1 := strings.Split(output, "\n")
 	result["system.os.name"] = strings.Split(res1[0], "\r")[0]
 	result["system.os.version"] = strings.Split(res1[1], "\r")[0]

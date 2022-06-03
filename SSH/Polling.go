@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"golang.org/x/crypto/ssh"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -30,7 +31,7 @@ func Polling(credMaps map[string]interface{}) {
 
 	// dial gets SSH client
 	addr := fmt.Sprintf("%s:%d", sshHost, sshPort)
-	sshClient, err := ssh.Dial("tcp", addr, config)
+	sshClient, errorDial := ssh.Dial("tcp", addr, config)
 
 	defer func() {
 
@@ -48,7 +49,73 @@ func Polling(credMaps map[string]interface{}) {
 		}
 
 	}()
-	if err != nil {
+
+	resultStatus := make(map[string]interface{})
+	if errorDial != nil {
+
+		log.SetFlags(0)
+
+		err := errorDial.Error()
+		//log.Fatal(err)
+		subStringPortError := "connection refused"
+
+		subStringDialError := "handshake failed"
+
+		subStringUnknownErrorPort := "unknown error"
+
+		if strings.Contains(err, subStringPortError) {
+
+			resultStatus["status"] = "failed"
+
+			resultStatus["error"] = "Port Invalid, Connection refused"
+
+			resultStatus["status.code"] = "400"
+
+			data, _ := json.Marshal(resultStatus)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+
+		} else if strings.Contains(err, subStringDialError) {
+
+			resultStatus["status"] = "failed"
+
+			resultStatus["error"] = "ssh Handshake Failed, user,password or ip.address does not match each other"
+
+			resultStatus["status.code"] = "400"
+
+			data, _ := json.Marshal(resultStatus)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+
+		} else if strings.Contains(err, subStringUnknownErrorPort) {
+			resultStatus["status"] = "failed"
+
+			resultStatus["error"] = errorDial.Error()
+
+			resultStatus["status.code"] = "401"
+
+			data, _ := json.Marshal(resultStatus)
+
+			stringEncode := b64.StdEncoding.EncodeToString(data)
+
+			log.SetFlags(0)
+
+			log.Fatal(stringEncode)
+		}
+
+	} else {
+
+		resultStatus["status"] = "success"
+
+		resultStatus["status.code"] = "200"
 	}
 
 	data := make(map[string]interface{})
@@ -98,7 +165,7 @@ func fetchCpu(client *ssh.Client) string {
 	}
 
 	session, err = client.NewSession()
-	cpuUserPercent, err := session.Output("mpstat | awk 'NR==4{print $5}'")
+	cpuUserPercent, err := session.Output("mpstat | grep \"all\"")
 	if err != nil {
 		panic(err)
 	}
@@ -112,22 +179,6 @@ func fetchCpu(client *ssh.Client) string {
 	}
 	systemUpercent := string(systemUserPercent)
 	splitSystemUserPercent := strings.Split(standardizeSpaces(systemUpercent), " ")
-
-	session, err = client.NewSession()
-	cpuIdlePercent, err := session.Output("mpstat | awk 'NR==4 {print $14}'")
-	if err != nil {
-		panic(err)
-	}
-	cpuIdlePercentage := string(cpuIdlePercent)
-	splitCpuIdlePercentage := strings.Split(standardizeSpaces(cpuIdlePercentage), " ")
-
-	session, err = client.NewSession()
-	cpuSysPercent, err := session.Output("mpstat | awk 'NR==4 {print $7}'")
-	if err != nil {
-		panic(err)
-	}
-	cpuSysPercentage := string(cpuSysPercent)
-	splitCpuSysPercentage := strings.Split(standardizeSpaces(cpuSysPercentage), " ")
 
 	session, err = client.NewSession()
 	cpuCore, err := session.Output("mpstat -P ALL")
@@ -162,9 +213,9 @@ func fetchCpu(client *ssh.Client) string {
 
 	result := map[string]interface{}{
 		"cpu.percent":      splitSystemUserPercent[0],
-		"cpu.user.percent": splitCpuUserPercent[0],
-		"cpu.idle.percent": splitCpuIdlePercentage[0],
-		"cpu.sys.percent":  splitCpuSysPercentage[0],
+		"cpu.user.percent": splitCpuUserPercent[4],
+		"cpu.idle.percent": splitCpuUserPercent[13],
+		"cpu.sys.percent":  splitCpuUserPercent[6],
 		"cpu.core":         getCpuMap,
 	}
 
@@ -230,6 +281,7 @@ func fetchProcess(client *ssh.Client) string {
 	if err != nil {
 		panic(err)
 	}
+
 	psaux, err := session.Output("ps aux")
 	if err != nil {
 		panic(err)
@@ -278,6 +330,7 @@ func fetchProcess(client *ssh.Client) string {
 		log.Print(stringEncode)
 
 	}
+
 	return string(bytes)
 
 }
@@ -378,41 +431,21 @@ func fetchDisk(client *ssh.Client) string {
 	diskFreeBytestemp := string(diskFreePercent)
 	splitdiskFreeBytePercent := strings.Split(standardizeSpaces(diskFreeBytestemp), " ")
 
-	//DisktotalBytes
-	session, err = client.NewSession()
-	if err != nil {
-		panic(err)
-	}
-	diskTotal, err := session.Output("df --total | grep \"total\" |  awk '{print $4}'")
-	if err != nil {
-		panic(err)
-	}
-	diskFreeBytes := string(diskTotal)
-	splitdiskTotal := strings.Split(standardizeSpaces(diskFreeBytes), " ")
-
 	//DiskUserBytes
 	session, err = client.NewSession()
 	if err != nil {
 		panic(err)
 	}
-	diskUserByte, err := session.Output("df --total | grep \"total\" |  awk '{print $3}'")
+	diskUserByte, err := session.Output("df --total | grep \"total\" |  awk '{print $3 \" \" $4}'")
 	if err != nil {
 		panic(err)
 	}
 	diskUserBytestring := string(diskUserByte)
 	splitdiskUserByte := strings.Split(standardizeSpaces(diskUserBytestring), " ")
-
-	//TotalFreeBytes
-	session, err = client.NewSession()
-	if err != nil {
-		panic(err)
-	}
-	diskTotalFreeByte, err := session.Output("df --total | grep \"total\" |  awk '{print $4}'")
-	if err != nil {
-		panic(err)
-	}
-	diskFreeBytestring := string(diskTotalFreeByte)
-	splitdiskFreeTotalByte := strings.Split(standardizeSpaces(diskFreeBytestring), " ")
+	intsplitUno, _ := strconv.Atoi(splitdiskUserByte[0])
+	intsplitDos, _ := strconv.Atoi(splitdiskUserByte[1])
+	//Free byte
+	userFreeData := intsplitUno - intsplitDos
 
 	//Volume
 	diskVolumeAll := string(disk)
@@ -443,9 +476,9 @@ func fetchDisk(client *ssh.Client) string {
 
 	result := map[string]interface{}{
 		//"disk.utilization" : ,
-		"disk.total.bytes": splitdiskTotal[0],
-		"disk.used.bytes":  splitdiskUserByte[0],
-		"disk.free.bytes":  splitdiskFreeTotalByte[0],
+		"disk.total.bytes": splitdiskUserByte[0],
+		"disk.used.bytes":  splitdiskUserByte[1],
+		"disk.free.bytes":  userFreeData,
 		"disk.volume":      getCpuMap,
 	}
 	bytes, errMarshal := json.Marshal(result)
