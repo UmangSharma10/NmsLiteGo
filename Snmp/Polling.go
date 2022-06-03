@@ -63,10 +63,10 @@ func Polling(credMaps map[string]interface{}) {
 
 	defer func() {
 
-		if r := recover(); r != nil {
+		if deferError := recover(); deferError != nil {
 			res := make(map[string]interface{})
 
-			res["error"] = r
+			res["error"] = deferError
 
 			bytes, _ := json.Marshal(res)
 
